@@ -16,7 +16,6 @@ const SkillRadarChart = () => {
   useEffect(() => {
     if (!svgRef.current) return
 
-    // Your actual skills with proper names and values based on your CV
     const data: SkillData[] = [
       { skill: '.NET Core', value: 95, category: 'Backend' },
       { skill: 'Angular', value: 90, category: 'Frontend' },
@@ -30,13 +29,12 @@ const SkillRadarChart = () => {
       { skill: 'GraphQL', value: 75, category: 'Backend' }
     ]
 
-    const width = 700
-    const height = 650
-    const radius = Math.min(width, height) / 2.3
+    const width = 800
+    const height = 700
+    const radius = Math.min(width, height) / 2.5
     const centerX = width / 2
     const centerY = height / 2
 
-    // Clear previous content
     d3.select(svgRef.current).selectAll('*').remove()
 
     const svg = d3.select(svgRef.current)
@@ -50,7 +48,7 @@ const SkillRadarChart = () => {
       .domain([0, 100])
       .range([0, radius])
 
-    // Draw background circles with value labels
+    // Draw background circles
     const levels = 5
     for (let level = 1; level <= levels; level++) {
       const r = radius * (level / levels)
@@ -61,78 +59,93 @@ const SkillRadarChart = () => {
         .attr('stroke', '#e2e8f0')
         .attr('stroke-width', 1)
         .attr('stroke-dasharray', '4,4')
-        .attr('opacity', 0.5)
       
-      // Add value labels on the left side
-      if (level > 0) {
-        const value = (level / levels) * 100
-        svg.append('text')
-          .attr('x', -radius - 10)
-          .attr('y', -r)
-          .attr('text-anchor', 'middle')
-          .style('font-size', '10px')
-          .style('fill', '#94a3b8')
-          .text(`${Math.round(value)}`)
-      }
+      const value = (level / levels) * 100
+      svg.append('text')
+        .attr('x', -radius - 15)
+        .attr('y', -r)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '10px')
+        .style('fill', '#94a3b8')
+        .text(`${Math.round(value)}`)
     }
 
-    // Draw axes and labels with better positioning
+    // Draw axes and labels
     data.forEach((d, i) => {
       const angle = i * angleSlice - Math.PI / 2
       const x = radius * Math.cos(angle)
-      const yAxis = radius * Math.sin(angle)
+      const y = radius * Math.sin(angle)
 
-      // Draw axis line
       svg.append('line')
         .attr('x1', 0)
         .attr('y1', 0)
         .attr('x2', x)
-        .attr('y2', yAxis)
+        .attr('y2', y)
         .attr('stroke', '#cbd5e1')
         .attr('stroke-width', 1)
         .attr('opacity', 0.4)
 
-      // Calculate label position with better offset
-      const labelRadius = radius + 35
-      const labelX = labelRadius * Math.cos(angle)
-      const labelY = labelRadius * Math.sin(angle)
+      const labelRadius = radius + 45
+      let labelX = labelRadius * Math.cos(angle)
+      let labelY = labelRadius * Math.sin(angle)
       
-      // Determine text anchor based on angle
       let textAnchor = 'middle'
-      if (Math.abs(Math.cos(angle)) > 0.8) {
-        textAnchor = Math.cos(angle) > 0 ? 'start' : 'end'
+      let dx = 0
+      let dy = 0
+      
+      if (Math.abs(Math.cos(angle)) < 0.3) {
+        textAnchor = 'middle'
+        dx = 0
+        dy = Math.sin(angle) > 0 ? -10 : 10
+      } else if (Math.cos(angle) > 0) {
+        textAnchor = 'start'
+        dx = 5
+        dy = 0
+      } else {
+        textAnchor = 'end'
+        dx = -5
+        dy = 0
       }
+      
+      if (d.skill === 'Entity Framework') {
+        dy = Math.sin(angle) > 0 ? -15 : 15
+      }
+      if (d.skill === 'Microservices') {
+        dx = Math.cos(angle) > 0 ? 10 : -10
+      }
+      
+      labelX += dx
+      labelY += dy
 
-      // Add skill label with background for better readability
       const labelGroup = svg.append('g')
         .attr('transform', `translate(${labelX}, ${labelY})`)
         .attr('cursor', 'pointer')
       
-      // Add background rect for text
+      const textLength = d.skill.length * 7
+      
       labelGroup.append('rect')
-        .attr('x', textAnchor === 'middle' ? -30 : (textAnchor === 'start' ? -5 : -55))
-        .attr('y', -10)
-        .attr('width', 60)
-        .attr('height', 20)
+        .attr('x', textAnchor === 'middle' ? -textLength/2 - 5 : (textAnchor === 'start' ? -5 : -textLength - 5))
+        .attr('y', -12)
+        .attr('width', textLength + 10)
+        .attr('height', 22)
         .attr('rx', 4)
         .attr('fill', 'white')
         .attr('stroke', '#3b82f6')
-        .attr('stroke-width', 1)
-        .attr('opacity', 0.9)
+        .attr('stroke-width', 1.5)
+        .attr('class', 'label-bg')
       
-      // Add text
       labelGroup.append('text')
         .attr('x', 0)
         .attr('y', 4)
-        .attr('text-anchor', 'middle')
+        .attr('text-anchor', textAnchor)
         .style('font-size', '11px')
         .style('font-weight', 'bold')
         .style('fill', '#1f2937')
+        .style('pointer-events', 'none')
         .text(d.skill)
       
-      // Add hover effect
       labelGroup.on('mouseover', function() {
-        d3.select(this).select('rect')
+        d3.select(this).select('.label-bg')
           .transition()
           .duration(200)
           .attr('fill', '#3b82f6')
@@ -142,20 +155,19 @@ const SkillRadarChart = () => {
           .duration(200)
           .style('fill', 'white')
         
-        // Highlight the corresponding axis
         svg.append('line')
           .attr('x1', 0)
           .attr('y1', 0)
           .attr('x2', x)
-          .attr('y2', yAxis)
+          .attr('y2', y)
           .attr('stroke', '#3b82f6')
-          .attr('stroke-width', 2)
+          .attr('stroke-width', 3)
           .attr('opacity', 0.8)
           .attr('class', 'highlight-line')
       })
       
       labelGroup.on('mouseout', function() {
-        d3.select(this).select('rect')
+        d3.select(this).select('.label-bg')
           .transition()
           .duration(200)
           .attr('fill', 'white')
@@ -174,14 +186,13 @@ const SkillRadarChart = () => {
       const angle = i * angleSlice - Math.PI / 2
       const r = scale(d.value)
       const x = r * Math.cos(angle)
-      const yAxis = r * Math.sin(angle)
-      return [x, yAxis]
+      const y = r * Math.sin(angle)
+      return [x, y]
     })
 
-    // Close the polygon by adding the first point at the end
     const polygonPoints = [...points, points[0]]
 
-    // Draw the radar area with gradient
+    // Create gradient
     const gradient = svg.append('defs')
       .append('linearGradient')
       .attr('id', 'radar-gradient')
@@ -200,57 +211,42 @@ const SkillRadarChart = () => {
       .attr('stop-color', '#8b5cf6')
       .attr('stop-opacity', 0.3)
 
-    // Draw the radar area (filled polygon)
+    // Draw radar area - NO OPACITY TRANSITION
     svg.append('polygon')
       .attr('points', polygonPoints.map(p => p.join(',')).join(' '))
       .attr('fill', 'url(#radar-gradient)')
       .attr('stroke', '#3b82f6')
       .attr('stroke-width', 3)
       .attr('stroke-linejoin', 'round')
-      .attr('opacity', 0)
-      .transition()
-      .duration(1500)
-      .attr('opacity', 1)
 
-    // Add data points with animation and tooltips
+    // Add data points - NO OPACITY TRANSITION
     points.forEach((point, i) => {
-      const [x, yAxis] = point
+      const [x, y] = point
       const skillData = data[i]
       
-      // Add glow effect
       const pointGroup = svg.append('g')
-        .attr('transform', `translate(${x}, ${yAxis})`)
+        .attr('transform', `translate(${x}, ${y})`)
         .attr('cursor', 'pointer')
       
       pointGroup.append('circle')
-        .attr('r', 0)
+        .attr('r', 8)
         .attr('fill', '#3b82f6')
         .attr('stroke', 'white')
         .attr('stroke-width', 3)
-        .transition()
-        .delay(1500 + i * 100)
-        .duration(500)
-        .attr('r', 8)
       
       pointGroup.append('circle')
-        .attr('r', 0)
-        .attr('fill', 'white')
-        .transition()
-        .delay(1500 + i * 100 + 200)
-        .duration(300)
         .attr('r', 3)
+        .attr('fill', 'white')
       
-      // Add tooltip on hover
       pointGroup.on('mouseover', function() {
-        d3.select(this).select('circle')
-          .transition()
-          .duration(200)
+        pointGroup.select('circle:first-child')
           .attr('r', 12)
           .attr('fill', '#2563eb')
         
-        // Show tooltip
-        const tooltipX = x > 0 ? x + 20 : x - 20
-        const tooltipY = yAxis > 0 ? yAxis - 20 : yAxis + 20
+        let tooltipX = x + 15
+        let tooltipY = y - 15
+        if (x < 0) tooltipX = x - 85
+        if (y < 0) tooltipY = y - 25
         
         const tooltip = svg.append('g')
           .attr('class', 'tooltip-group')
@@ -265,7 +261,6 @@ const SkillRadarChart = () => {
           .attr('fill', '#1f2937')
           .attr('stroke', '#3b82f6')
           .attr('stroke-width', 2)
-          .attr('opacity', 0.95)
         
         tooltip.append('text')
           .attr('x', 0)
@@ -286,9 +281,7 @@ const SkillRadarChart = () => {
       })
       
       pointGroup.on('mouseout', function() {
-        d3.select(this).select('circle')
-          .transition()
-          .duration(200)
+        pointGroup.select('circle:first-child')
           .attr('r', 8)
           .attr('fill', '#3b82f6')
         
@@ -296,54 +289,55 @@ const SkillRadarChart = () => {
       })
     })
 
-    // Add value labels near points
+    // Add value labels - NO OPACITY TRANSITION
     points.forEach((point, i) => {
-      const [x, yAxis] = point
+      const [x, y] = point
       const angle = i * angleSlice - Math.PI / 2
-      const offset = 18
-      const offsetX = offset * Math.cos(angle)
-      const offsetY = offset * Math.sin(angle)
+      
+      let offsetX = 12
+      let offsetY = -12
+      
+      if (Math.abs(Math.cos(angle)) > 0.7) {
+        offsetX = Math.cos(angle) > 0 ? 15 : -15
+        offsetY = -8
+      }
       
       svg.append('text')
         .attr('x', x + offsetX)
-        .attr('y', yAxis + offsetY)
+        .attr('y', y + offsetY)
         .attr('text-anchor', 'middle')
-        .style('font-size', '0px')
+        .style('font-size', '11px')
         .style('font-weight', 'bold')
         .style('fill', '#3b82f6')
         .style('cursor', 'pointer')
         .text(`${data[i].value}%`)
-        .transition()
-        .delay(2000 + i * 100)
-        .duration(500)
-        .style('font-size', '12px')
     })
 
     // Add title
     svg.append('text')
       .attr('x', 0)
-      .attr('y', -radius - 25)
+      .attr('y', -radius - 30)
       .attr('text-anchor', 'middle')
-      .style('font-size', '20px')
+      .style('font-size', '18px')
       .style('font-weight', 'bold')
-      .style('fill', '#3b82f6')
+      .style('fill', '#1f2937')
       .text('Technical Skills Radar Chart')
 
-    // Add subtitle with your designation
+    // Add subtitle
     svg.append('text')
       .attr('x', 0)
-      .attr('y', -radius - 8)
+      .attr('y', -radius - 12)
       .attr('text-anchor', 'middle')
-      .style('font-size', '13px')
+      .style('font-size', '12px')
       .style('fill', '#6b7280')
       .text('Senior Software Engineer & Technical Lead - Skill Proficiency Assessment')
 
-    // Add legend for categories with actual categories
+    // Add legend
     const categories = ['Frontend', 'Backend', 'Database', 'DevOps', 'Architecture']
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
     
     const legend = svg.append('g')
-      .attr('transform', `translate(${radius + 20}, ${-radius + 30})`)
+      .attr('transform', `translate(${radius + 30}, ${-radius + 40})`)
     
     categories.forEach((cat, i) => {
       const color = colors[i % colors.length]
@@ -363,7 +357,6 @@ const SkillRadarChart = () => {
         .text(cat)
     })
 
-    // Add a subtle outer ring
     svg.append('circle')
       .attr('r', radius + 5)
       .attr('fill', 'none')
@@ -375,9 +368,8 @@ const SkillRadarChart = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 1 }}
       className="flex justify-center items-center p-4 overflow-x-auto"
     >
       <svg 

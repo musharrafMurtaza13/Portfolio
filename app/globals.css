@@ -1,4 +1,3 @@
-/* app/globals.css */
 @import "tailwindcss";
 
 @theme {
@@ -18,28 +17,10 @@
   }
 }
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+@layer base {
+  html {
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
-}
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
 }
 
 @layer utilities {
@@ -67,10 +48,15 @@ body {
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .bg-grid-pattern {
-    background-image: 
-      linear-gradient(to right, #374151 1px, transparent 1px),
-      linear-gradient(to bottom, #374151 1px, transparent 1px);
-  }
+.dark .bg-grid-pattern {
+  background-image: 
+    linear-gradient(to right, #374151 1px, transparent 1px),
+    linear-gradient(to bottom, #374151 1px, transparent 1px);
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }

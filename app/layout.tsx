@@ -1,19 +1,14 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { ThemeProvider } from './providers/ThemeProvider'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Hafiz Musharraf Ahmed - Senior Software Engineer & Technical Lead',
-  description: 'Portfolio of Hafiz Musharraf Ahmed - Senior Software Engineer with 7+ years of experience in .NET Core, Angular, React, and SQL Server',
-  keywords: 'Software Engineer, Technical Lead, .NET Core, Angular, React, Next.js, Portfolio',
-  authors: [{ name: 'Hafiz Musharraf Ahmed' }],
-  openGraph: {
-    title: 'Hafiz Musharraf Ahmed - Senior Software Engineer',
-    description: '7+ years of experience in .NET Core, Angular, React, and SQL Server',
-    type: 'website',
-  },
+  description: 'Portfolio of Hafiz Musharraf Ahmed - Senior Software Engineer with 7+ years of experience',
 }
 
 export default function RootLayout({
@@ -22,8 +17,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider>
+          <ThemeToggle />
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
